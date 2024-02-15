@@ -7,7 +7,7 @@
 
 const int BUFFER_SIZE = 1024;
 using namespace std;
-map<string, string> KV_DATASTORE;
+map<string, string> db_umap;
 
 void handle_client(int client_socket) {
     char buffer[BUFFER_SIZE];
@@ -23,7 +23,7 @@ void handle_client(int client_socket) {
                 char *value = strtok(NULL, "\n") + 1;
 
                 if (key != NULL && value != NULL) {
-                    KV_DATASTORE[key] = value;
+                    db_umap[key] = value;
                     send(client_socket, "FIN\n", 4, 0);
                 } else {
                     send(client_socket, "ERROR\n", 6, 0);
@@ -34,8 +34,8 @@ void handle_client(int client_socket) {
             } else if (strcmp(token, "READ") == 0) {
                 char *key = strtok(NULL, "\n");
                 if (key != NULL) {
-                    auto it = KV_DATASTORE.find(key);
-                    if (it != KV_DATASTORE.end()) {
+                    auto it = db_umap.find(key);
+                    if (it != db_umap.end()) {
                         send(client_socket, (it->second + "\n").c_str(), it->second.size() + 1, 0);
                     } else {
                         send(client_socket, "NULL\n", 5, 0);
@@ -48,7 +48,7 @@ void handle_client(int client_socket) {
             } else if (strcmp(token, "DELETE") == 0) {
                 char *key = strtok(NULL, "\n");
                 if (key != NULL) {
-                    size_t erased = KV_DATASTORE.erase(key);
+                    size_t erased = db_umap.erase(key);
                     if (erased > 0) {
                         send(client_socket, "FIN\n", 4, 0);
                     } else {
@@ -60,7 +60,7 @@ void handle_client(int client_socket) {
                     close(client_socket);
                 }
             } else if (strcmp(token, "COUNT") == 0) {
-                send(client_socket, (to_string(KV_DATASTORE.size()) + "\n").c_str(), to_string(KV_DATASTORE.size()).size() + 1, 0);
+                send(client_socket, (to_string(db_umap.size()) + "\n").c_str(), to_string(db_umap.size()).size() + 1, 0);
             } else if (strcmp(token, "END") == 0) {
 				send(client_socket, "\n", 1, 0);
                 close(client_socket);
